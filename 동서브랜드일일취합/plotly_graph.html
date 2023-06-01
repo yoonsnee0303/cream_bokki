@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    #preview {
+      z-index: 9999;
+      position: absolute;
+      border: 0px solid #ccc;
+      background: #333;
+      padding: 1px;
+      display: none;
+      color: #fff;
+    }
+  </style>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      var xOffset = 10;
+      var yOffset = 30;
+
+      $(document).on("mouseover", ".thumbnail", function (e) {
+        var data = [
+          {
+            x: [1, 2, 3, 4, 5],
+            y: [250, 300, 200, 400, 150],
+            type: "scatter"
+          }
+        ];
+
+        Plotly.newPlot("preview", data);
+
+        $("#preview").fadeIn("fast");
+      });
+
+      $(document).on("mousemove", ".thumbnail", function (e) {
+        $("#preview")
+          .css("top", (e.pageY - xOffset) + "px")
+          .css("left", (e.pageX + yOffset) + "px");
+      });
+
+      $(document).on("mouseout", ".thumbnail", function () {
+        $("#preview").fadeOut("fast", function () {
+          Plotly.purge("preview");
+        });
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <img src="https://www.gstatic.com/webp/gallery/1.sm.jpg" class="thumbnail" height="50px">
+  <div id="preview"></div>
+</body>
+
+</html>

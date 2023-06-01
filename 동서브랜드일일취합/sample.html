@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <title>Test</title>
+  <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            }
+    /* 미리보기 스타일 셋팅 */
+    #preview {
+      z-index: 9999;
+      position: absolute;
+      border: 0px solid #ccc;
+      background: #333;
+      padding: 1px;
+      display: none;
+      color: #fff;
+    }
+  </style>
+  <script type="text/javascript">
+    $(document).ready(function () {
+      var xOffset = 10;
+      var yOffset = 30;
+
+      $(document).on("mouseover", ".thumbnail", function (e) { //마우스 오버시
+        var chart = new CanvasJS.Chart("preview", {
+          title: {
+            text: "월별 판매량"
+          },
+          data: [
+            {
+              type: "line",
+              dataPoints: [
+                { label: "1월", y: 250 },
+                { label: "2월", y: 300 },
+                { label: "3월", y: 200 },
+                { label: "4월", y: 400 },
+                { label: "5월", y: 150 },
+                { label: "5월", y: -100 }
+              ]
+            }
+          ]
+        });
+
+        chart.render();
+
+        $("#preview").fadeIn("fast"); //미리보기 화면 설정 셋팅
+      });
+
+      $(document).on("mousemove", ".thumbnail", function (e) { //마우스 이동시
+        $("#preview")
+          .css("top", (e.pageY - xOffset) + "px")
+          .css("left", (e.pageX + yOffset) + "px");
+      });
+
+      $(document).on("mouseout", ".thumbnail", function () { //마우스 아웃시
+        $("#preview").fadeOut("fast", function () {
+          $(this).empty(); // CanvasJS 그래프 삭제
+        });
+      });
+    });
+
+  </script>
+</head>
+
+<body>
+  <img src="https://www.gstatic.com/webp/gallery/1.sm.jpg" class="thumbnail" height="50px">
+  <div id="preview"></div>
+</body>
+
+</html>

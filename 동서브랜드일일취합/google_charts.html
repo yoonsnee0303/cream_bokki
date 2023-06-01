@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test</title>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var xOffset = 10;
+      var yOffset = 30;
+      var previewDiv = null;
+
+      document.addEventListener("mouseover", function (e) {
+        if (e.target.classList.contains("thumbnail")) {
+          previewDiv = document.createElement("div");
+          previewDiv.id = "preview";
+          var chartDiv = document.createElement("div");
+          chartDiv.id = "chart";
+          previewDiv.appendChild(chartDiv);
+          document.body.appendChild(previewDiv);
+
+          previewDiv.style.top = e.pageY - xOffset + "px";
+          previewDiv.style.left = e.pageX + yOffset + "px";
+          previewDiv.style.display = "block";
+
+          drawChart();
+        }
+      });
+
+      document.addEventListener("mousemove", function (e) {
+        if (previewDiv) {
+          previewDiv.style.top = e.pageY - xOffset + "px";
+          previewDiv.style.left = e.pageX + yOffset + "px";
+        }
+      });
+
+      document.addEventListener("mouseout", function (e) {
+        if (previewDiv && e.target.classList.contains("thumbnail")) {
+          previewDiv.style.display = "none";
+          previewDiv.parentNode.removeChild(previewDiv);
+          previewDiv = null;
+        }
+      });
+
+    let date = []; // Declare the date array
+    let sales = []; // Declare the sales array
+
+    let url = "brand_1.csv";
+    axios.get(url).then(function (result) {
+      let pdtLists = result.data.split("\n");
+      const newpdtLists = pdtLists.map((item) => item.split(","));
+      for (let i = 0; i < newpdtLists.length; i++) {
+        for (let j = 0; j < newpdtLists[0].length; j++) {
+          let currentDate = newpdtLists[i][0]; //날짜
+          if (
+            newpdtLists[i][j] == newpdtLists[0][3] && 
+            currentDate >= "2023-05-08" && //날짜 변경 날짜 변경 날짜 변경 날짜 변경 날짜 변경 날짜 변경 
+            currentDate <= "2023-05-12"
+          ) {
+            // console.log(newpdtLists[i]);
+            title = newpdtLists[i][3] //상품명
+            date.push(newpdtLists[i][0]); //날짜
+            sales.push(newpdtLists[i][5]); //가격
+
+          }
+        }
+      }
+      console.log(title)
+      console.log(date);
+      console.log(sales);
+      // drawChart();
+    });
+
+    function drawChart() {
+      google.charts.load("current", { packages: ["corechart"] });
+      google.charts.setOnLoadCallback(function () {
+        let data = new google.visualization.DataTable();
+        data.addColumn("string", "날짜");
+        data.addColumn("number", "가격");
+
+        for (let i = 0; i < date.length; i++) {
+          data.addRow([date[i], parseInt(sales[i])]);
+        }
+
+        let options = {
+          title: 'Sample Chart',
+          curveType: 'function',
+          width: 400,
+          height: 300
+        };
+        // console.log(data);
+
+        let chart = new google.visualization.BarChart(document.getElementById('chart'));
+        chart.draw(data, options);
+      });
+    }
+    });
+  </script>
+
+  <style>
+    #preview {
+      z-index: 9999;
+      position: absolute;
+      border: 0px solid #ccc;
+      background: #333;
+      padding: 1px;
+      display: none;
+      color: #fff;
+    }
+
+    #chart {
+      width: 400px;
+      height: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <img src="https://www.gstatic.com/webp/gallery/1.sm.jpg" class="thumbnail" height="50px">
+</body>
+
+</html>

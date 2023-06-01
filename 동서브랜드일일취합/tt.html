@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>마우스 오버 시 div 가져오기</title>
+    <style>
+        #myDiv {
+            width: 200px;
+            height: 200px;
+            background-color: lightgray;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="myDiv" onmouseover="getDiv()">마우스를 이 곳에 올리세요.</div>
+
+    <script>
+        function getDiv() {
+            var divElement = document.getElementById("myDiv");
+            console.log(divElement);
+        }
+    </script>
+</body>
+
+</html>

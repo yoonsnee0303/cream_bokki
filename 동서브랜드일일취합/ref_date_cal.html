@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        //날짜계산
+        //날짜계산
+        let date = new Date();
+        //어제, 오늘
+        if (skip == 1 || skip == 0) {
+            date.setDate(date.getDate() - skip);
+            var temp = date.toLocaleString().replaceAll(" ", "").split(".");
+            var startdate = temp[0] + "-" + temp[1] + "-" + temp[2];
+            lastdate = startdate
+        }
+        //그외
+        else {
+            //오늘
+            date.setDate(date.getDate());
+            var temp = date.toLocaleString().replaceAll(" ", "").split(".");
+            var lastdate = temp[0] + "-" + temp[1] + "-" + temp[2];
+
+            //계산
+            skip = skip + 1
+            date.setDate(date.getDate() - skip);
+            var temp = date.toLocaleString().replaceAll(" ", "").split(".");
+            var startdate = temp[0] + "-" + temp[1] + "-" + temp[2];
+        }
+        console.log(startdate);
+        console.log(lastdate);
+
+    </script>
+</body>
+
+</html>

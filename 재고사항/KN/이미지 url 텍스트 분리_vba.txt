@@ -1,0 +1,42 @@
+Sub RemoveBracketsForAllCells()
+    Dim urlArray() As String
+    Dim urlStr As String
+    Dim imgStr As String
+    Dim i As Integer
+    
+    ' Loop through all cells in column A
+    For Each cell In Range("A:A").Cells
+        ' Get the URL string from the current cell
+        urlStr = cell.Value
+        
+        ' Check if the cell is empty or null
+        If Len(urlStr) > 0 Then
+            ' Remove the square brackets, single quotes, and any whitespace
+            urlStr = Replace(urlStr, "[", "")
+            urlStr = Replace(urlStr, "]", "")
+            urlStr = Replace(urlStr, "'", "")
+            urlStr = Trim(urlStr)
+            
+            ' Split the URL string into an array
+            urlArray = Split(urlStr, ",")
+            
+            ' Initialize imgStr with the <center><p> tag
+            imgStr = "<center><p style='font-size: 0px;'>"
+            
+            ' Loop through the URL array and add each <img> tag with style='vertical-align:bottom;'
+            For i = 0 To UBound(urlArray)
+                imgStr = imgStr & "<img src='" & urlArray(i) & "' " & "style='vertical-align:bottom;' />"
+            Next i
+            
+            ' Close the </p></center> tags
+            imgStr = imgStr & "</p></center>"
+            
+            ' Assign the <img> tag to the corresponding cell in column B
+            cell.Offset(0, 1).Value = imgStr
+        End If
+    Next cell
+End Sub
+
+
+
+
