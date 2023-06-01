@@ -89,7 +89,7 @@ def ftp_up():
 
 
         # Set the directory path
-        directory_path = 'C:/Users/DSF20220704001/OneDrive/바탕 화면/네이버판매순'
+        directory_path = 'C:/Users/Data2/OneDrive/바탕 화면/네이버판매순'
 
         # Get a list of all the items in the directory
         items = os.listdir(directory_path)

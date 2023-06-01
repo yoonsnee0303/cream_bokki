@@ -300,6 +300,8 @@ class WorkerThread_mall(QThread):
                         self.log_update.emit(f'쿠팡 [텍스트 상단] 확인 중..')
                         prod_class = soup.find('div', class_='prod-atf-main')
                         if prod_class is None:
+                            print('prod_class is None')
+                            time.sleep(1000)
                             return ''
                         else:
                             main = prod_class.text.strip().replace(" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
@@ -2260,7 +2262,6 @@ class WorkerThread_list_get(QThread):
                         write.writerows([url_data])
                     self.log_update2.emit(f"{date} 상세페이지 파일 업로드")
                     
-                # elif brand == 'coupang':
 
                 self.progress_update.emit(cnt*ratio)
                 cnt += 1 

@@ -116,7 +116,8 @@
     let month = String(today.getMonth() + 1).padStart(2, '0');
     let day = String(today.getDate()).padStart(2, '0');
     let formattedDate = year + '-' + month + '-' + day;
-    formattedDate = '2023-05-30'
+    console.log(formattedDate)
+    // formattedDate = '2023-05-30'
     let upTodate = document.getElementById("upTodate");
     upTodate.innerText = `수집일 : ${formattedDate} (수집기간: 최근 2주)`
 
