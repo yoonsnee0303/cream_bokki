@@ -24,12 +24,11 @@ cmd에서 .git폴더를 삭제하고 다시 git push
 
 2. 깃 저장소에서도 에러가 발생한 폴더 삭제
 
-   git -rm --cached . -rf
+>   git -rm --cached . -rf
 
 (git -rm은 원격 저장소와 로컬 저장소에 있는 파일을 모두 삭제)
 
 (git -rm --cached는 원격 저장소에 있는 파일을 삭제. 로컬 저장소에 있는 파일은 삭제하지 않음)
 
-```
-![Alt text](`C:\Users\Data2\OneDrive\바탕 화면\20230601_135704.png` "Optional title")
-```
+![20230601_135704](https://github.com/yoonsnee0303/cream_bokki/assets/127804620/086e4266-68ab-44c2-b9b8-17b9acaecce9)
+
