@@ -302,7 +302,6 @@ class WorkerThread_mall(QThread):
                         prod_class = soup.find('div', class_='prod-atf-main')
                         if prod_class is None:
                             print('prod_class is None')
-                            time.sleep(1000)
                             return ''
                         else:
                             main = prod_class.text.strip().replace(" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
@@ -1994,32 +1993,52 @@ class WorkerThread_list_get(QThread):
 
     def run(self):
         def get_week():
-            def get_week_of_month(date):
-                first_day = date.replace(day=1)
-                adjusted_day = first_day + datetime.timedelta(days=(6 - first_day.weekday()))
-                week_number = (date - adjusted_day).days // 7 + 2
-                return week_number
+            # def get_week_of_month(date):
+            #     first_day = date.replace(day=1)
+            #     adjusted_day = first_day + datetime.timedelta(days=(6 - first_day.weekday()))
+            #     week_number = (date - adjusted_day).days // 7 + 2
+            #     return week_number
 
+            # 현재 날짜 구하기
+
+            def current_month_weeks():
+                current_date = datetime.date.today()
+                current_date = datetime.date(2023, 8, 20)  # test test test 
+
+                start_date = datetime.date(current_date.year, current_date.month, 1)
+                end_date = start_date + datetime.timedelta(days=31)
+                
+                current_week = 1
+                week_to_check = (current_date.day - 1) // 7 + 1  # 현재 날짜가 속한 주차 계산
+                is_in_week = False
+                
+                while start_date < end_date:
+                    if start_date.month != current_date.month:
+                        break
+                        
+                    if current_week == week_to_check:
+                        is_in_week = True
+                        break
+                    
+                    start_date += datetime.timedelta(weeks=1)
+                    current_week += 1
+                
+                if is_in_week:
+                    date = f"{start_date.strftime('%m월')} {week_to_check}주차"
+                return date
+            date = current_month_weeks()
             # Firebase Storage 인스턴스 생성
             bucket = firebase_storage.bucket()
 
             blobs = bucket.list_blobs()
-
-
-            # 현재 날짜 구하기
-            current_date = datetime.date.today()
-
-            # 현재 월의 주차와 월 출력
-            week_of_month = get_week_of_month(current_date)
-            month = current_date.strftime("%m월")
-            date = month[1:3] + str(week_of_month) + '주차'
-            for l in list(range(10,12)): # 10월 11월 12월
-                if str(l) in month:
-                    date = month[:3] + str(week_of_month) + '주차'
-                    print(date)
+            # for l in list(range(10,12)): # 10월 11월 12월
+            #     if str(l) in month:
+            #         date = month[:3] + str(week_of_month) + '주차'
+            #         print(date)
             for blob in blobs:
                 # print(blob.name)
                 folder_name = blob.name.split('/')[0]
+                print(date == folder_name)
                 if date == folder_name:
                     print(f'{date}는 이미 다운로드 되어있는 주차입니다.')
                     return date,'다운로드 필요없음'
@@ -2027,6 +2046,7 @@ class WorkerThread_list_get(QThread):
         
         def get_list(date):
             brand_lists = ['11', 'lotte', 'sin', 'naver', 'today','gmarket', 'auction', 'interpark','coupang']
+            brand_lists = ['coupang']
             cnt = 1
             ratio = 11
             for brand in brand_lists:
@@ -2198,9 +2218,9 @@ class WorkerThread_list_get(QThread):
                             break
                         else:
                             soup = bs(res.text, 'html.parser')
+                            time.sleep(.5)
                             elem = soup.find("ul", id="idProductImg")
                             elems = elem.find_all("li")
-                            print(len(elems))
 
                             for el in range(len(elems)):
                                 test = int((ratio/len(elems))*el+ratio*4)
@@ -2211,7 +2231,7 @@ class WorkerThread_list_get(QThread):
                                 print(url)
                             print(f'신세계 {len(all_list)}')
                             page += 1
-                            time.sleep(.5)
+                            time.sleep(1)
 
                 elif brand == 'gmarket':
                     self.log_update.emit("지마켓")
@@ -2325,7 +2345,7 @@ class WorkerThread_list_get(QThread):
                     driver = webdriver.Chrome(options=options)
                     
                     driver.get("https://store.coupang.com/vp/vendors/A00037308/products")
-
+                    time.sleep(.5)
                     page_height = driver.execute_script("return document.body.scrollHeight")
 
                     scroll_height = page_height // 2.5
@@ -2333,11 +2353,17 @@ class WorkerThread_list_get(QThread):
 
                     see_more = driver.find_element(By.CLASS_NAME, 'scp-component-filter-options__fold-items').click()
                     ul_elements = driver.find_elements(By.CLASS_NAME,'scp-component-filter-options__option-items__btn-fold')
+                    # log
+                    self.log_update.emit('open category')
+                    cnt = 0
                     for ul_element in ul_elements:
                         driver.execute_script("arguments[0].click();", ul_element) # 버튼 클릭
                         print(ul_element.text)
-                        self.log_update.emit('open category')
-                        time.sleep(.1)
+                        time.sleep(1)
+                        cnt += 1
+                        print(cnt)
+                    print(f'final {cnt}')
+                    time.sleep(1000)
                     html = driver.page_source
                     soup = bs(html,'html.parser')
                     # 파일 쓰기 모드로 열기
@@ -2357,7 +2383,7 @@ class WorkerThread_list_get(QThread):
                                 tag = str(tag).split(sep='=')[1].split(sep='t')[1].split(sep='"')[0]
                                 tag_list.append(tag)
 
-                    tag_list = tag_list[1:] # empty tag
+                    tag_list = tag_list[1:] # 0: empty tag
 
 
                     def process_urls(tag_list,list_start,list_end):
@@ -2400,14 +2426,13 @@ class WorkerThread_list_get(QThread):
                                     print(f'쿠팡 {len(detail_url)}')
                                 print(url)
                                 time.sleep(1)
-
+                            detail_url = set(detail_url) # 중복제거
                             with open(file_path, "a", newline='',encoding="utf-8") as f:
                                 writer = csv.writer(f)
                                 for url in detail_url:
                                     writer.writerow([url])
                             self.log_update2.emit(f"{date} 상세페이지 파일 업로드")
                             time.sleep(5)
-                            # print(f'{num}/{len(tag_list)}')
                             driver.close()
 
                             # print(total_cnt)
@@ -2429,7 +2454,6 @@ class WorkerThread_list_get(QThread):
                             end += total % num_intervals
 
                         threads = []
-                        num_threads = num_intervals
                         # print(start,'/',end)
                         # print(num_threads)
                         thread = threading.Thread(target=process_urls, args=(tag_list, start ,end))
