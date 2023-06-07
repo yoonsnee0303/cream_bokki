@@ -9,6 +9,7 @@
     <link href="index3.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         #best {
             display: flex;
@@ -80,6 +81,19 @@
         #btn_pr_3m:hover,
         #btn_pr_6m:hover {
             background-color: rgb(139, 0, 97);
+        }
+
+        #popup {
+            position: fixed;
+            display: none;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            z-index: 9999;
+            /* To make sure the popup appears on top */
+            pointer-events: none;
+            /* To prevent the popup from interfering with mouse events */
         }
     </style>
 </head>
@@ -153,6 +167,8 @@
         <div id="part_chart1"></div>
         <div id="part_chart2"></div>
         <div id="part_list"></div>
+        <div id="best"></div>
+        <div id="popup"></div>
     </div>
 
 
@@ -555,6 +571,109 @@
                             cardContainer.appendChild(card);
                         }
                     }
+                    //hover
+                    //hover
+                    //hover
+                    //hover
+                    const bestCardElements = document.querySelectorAll('.best_card');
+                    const popupElement = document.getElementById('popup');
+
+                    var tableData3 = [];
+                    bestCardElements.forEach((card, index) => {
+                        var h2Text = card.querySelector('h2').textContent;
+                        h2Text = h2Text.substring(h2Text.indexOf('] ') + 2);
+
+                        card.addEventListener('mouseover', function (event) {
+                            for (i = 0; i < tableData.length; i++) {
+                                if (tableData[i][3].includes(h2Text)) {
+                                    var listItem = [...tableData[i]];
+                                    tableData3.push(listItem);
+                                }
+                            }
+
+                            // console.log(tableData3);
+                            var groupedData = tableData3.reduce(function (acc, data) {
+                                var dateStr = data[0];
+                                var value = Number(data[4]);
+
+                                if (acc[dateStr]) {
+                                    acc[dateStr] += value;
+                                } else {
+                                    acc[dateStr] = value;
+                                }
+                                return acc;
+                            }, {});
+
+                            var newList = Object.entries(groupedData).map(function ([date, value]) {
+                                return [date, value];
+                            });
+
+                            newList.sort(function (a, b) {
+                                var dateA = new Date(a[0]);
+                                var dateB = new Date(b[0]);
+
+                                return dateA - dateB; // Compare dates in descending order
+                            });
+
+                            popupElement.textContent = '';
+                            // popupElement.textContent = h2Text;
+                            // popupElement.textContent = newList;
+                            popupElement.style.display = 'block';
+                            popupElement.style.top = `${event.clientY + 10}px`;
+                            popupElement.style.left = `${event.clientX + 10}px`;
+                            console.log(h2Text);
+                            console.log(newList);
+
+                            // Create a canvas element for the chart
+                            var chartCanvas = document.createElement('canvas');
+                            chartCanvas.width = 400; // Set the desired width
+                            chartCanvas.height = 300; // Set the desired height
+                            popupElement.appendChild(chartCanvas);
+
+                            // Get the chart context
+                            var chartContext = chartCanvas.getContext('2d');
+
+                            // Prepare the data for the chart
+                            var chartLabels = newList.map(function (entry) {
+                                return entry[0];
+                            });
+                            var chartData = newList.map(function (entry) {
+                                return entry[1];
+                            });
+
+                            // Create the chart using Chart.js
+                            new Chart(chartContext, {
+                                type: 'line', // Use the desired chart type (e.g., line, bar, pie, etc.)
+                                data: {
+                                    labels: chartLabels,
+                                    datasets: [{
+                                        label: h2Text,
+                                        data: chartData,
+                                        backgroundColor: 'rgba(75, 192, 192, 0.2)', // Set the desired background color
+                                        borderColor: 'rgba(75, 192, 192, 1)', // Set the desired border color
+                                        borderWidth: 1, // Set the desired border width
+                                    }],
+                                },
+                                options: {
+                                    // Set any additional options for the chart
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true, // Ensures the y-axis starts at 0
+                                            ticks: {
+                                                precision: 0, // Displays integer values only
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+
+                        });
+
+                        card.addEventListener('mouseout', function () {
+                            popupElement.style.display = 'none';
+                            tableData3 = [];
+                        });
+                    });
                 })
         }
 

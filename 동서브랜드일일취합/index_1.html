@@ -659,7 +659,15 @@
                                     }],
                                 },
                                 options: {
-                                    // Set any additional options for the chart (e.g., title, axes, etc.)
+                                    // Set any additional options for the chart
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true, // Ensures the y-axis starts at 0
+                                            ticks: {
+                                                precision: 0, // Displays integer values only
+                                            }
+                                        }
+                                    }
                                 }
                             });
 

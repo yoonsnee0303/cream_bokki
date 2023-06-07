@@ -352,7 +352,7 @@ def web_ftp():
     driver.implicitly_wait(5)
     driver.find_element(By.NAME, 'managerId').send_keys('dfgagu')
     time.sleep(0.5)
-    driver.find_element(By.NAME, 'managerPw').send_keys('df1051184!@')
+    driver.find_element(By.NAME, 'managerPw').send_keys('df1051184@!')
     time.sleep(0.5)
     driver.find_element(By.CLASS_NAME, 'btn.btn-black').click()
 

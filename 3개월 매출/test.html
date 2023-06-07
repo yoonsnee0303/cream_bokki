@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    .card {
+      width: 300px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin: 10px;
+      display: inline-block;
+    }
+
+    .card img {
+      width: 100%;
+      height: auto;
+    }
+
+    .card-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .card-desc {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="cardContainer"></div>
+
+  <script>
+    fetch('brand.csv')
+      .then(response => response.text())
+      .then(csvData => {
+        const lines = csvData.split('\n');
+        lines.forEach(line => {
+          const data = line.split(',');
+
+          const title = data[0];
+          const quantity = data[1];
+          const imageUrl = data[2];
+          const productUrl = data[3];
+
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          const image = document.createElement('img');
+          image.src = imageUrl;
+          image.alt = 'Product Image';
+
+          const cardTitle = document.createElement('div');
+          cardTitle.className = 'card-title';
+          cardTitle.textContent = title;
+
+          const cardDesc = document.createElement('div');
+          cardDesc.className = 'card-desc';
+          cardDesc.textContent = `Quantity: ${quantity}`;
+
+          const link = document.createElement('a');
+          link.href = productUrl;
+          link.target = '_blank';
+          link.textContent = 'View Product';
+
+          card.appendChild(image);
+          card.appendChild(cardTitle);
+          card.appendChild(cardDesc);
+          card.appendChild(link);
+
+          document.getElementById('cardContainer').appendChild(card);
+        });
+      });
+  </script>
+</body>
+</html>
