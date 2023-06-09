@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sample</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <div id="test"></div>
+
+    <script>
+        function readAndProcessFile(fileUrl) {
+            return axios.get(fileUrl)
+                .then(response => {
+                    if (response.status !== 200) {
+                        throw new Error('Failed to fetch the file');
+                    }
+                    return response.data;
+                })
+                .then(contents => {
+                    const lines = contents.split('\n');
+                    const cellList = [];
+                    const brandLists = [];
+                    lines.forEach(line => {
+                        const cells = line.split(',');
+                        cells.forEach(cell => {
+                            if (cell !== '') {
+                                brandName = cell.split('_')[0]
+                                cell = 'image_file/' + cell;
+                                cellList.push(cell);
+                                brandLists.push(brandName);
+                            }
+                        });
+                    });
+
+                    return [cellList, brandLists];
+                });
+        }
+
+        const fileUrl = 'image.txt';
+        readAndProcessFile(fileUrl)
+            .then(result => {
+                let cellList = result[0];
+                const brandLists = result[1];
+
+                console.log(cellList.length)
+                console.log(brandLists)
+
+                function make_url (cellList,brandLists) {
+                    for (brand of brandLists) {
+                        for (cell of cellList) {
+                            if (cell.includes(brand)) {
+                                pdt_code =  cell.split('/')[1].split('_')[3].split('.')[0] // 상품코드
+                                console.log(cell)
+                                if (brand == 'cou') {
+                                    pdt_path = `https://www.coupang.com/vp/products/1868935876?ItemId=${pdt_code}` //상세페이지 url
+
+                                } else if (brand == 'interpark') {
+                                    console.log(pdt_code)
+                                    pdt_path = `https://shopping.interpark.com/product/productInfo.do?prdNo=${pdt_code}`
+
+                                } else if (brand == 'sin') {
+                                    pdt_path = `https://www.ssg.com/item/itemView.ssg?itemId=${pdt_code}`
+
+                                } else if (brand == 'auction') {
+                                    pdt_path = `http://itempage3.auction.co.kr/DetailView.aspx?itemno=${pdt_code}`
+
+                                } else if (brand == 'gmarket') {
+                                    pdt_path = `http://item.gmarket.co.kr/Item?goodscode=${pdt_code}`
+
+                                } else if (brand == 'naver') {
+                                    pdt_path = `https://smartstore.naver.com/newdf2013/products/${pdt_code}`
+
+                                } else if (brand == 'today') {
+                                    pdt_path = `https://ohou.se/productions/${pdt_code}`
+
+                                } else if (brand == 'lotte') {
+                                    pdt_path = `https://www.lotteimall.com/goods/viewGoodsDetail.lotte?goods_no=${pdt_code}`
+
+                                } else if (brand == 'llst') {
+                                    pdt_path = `https://www.11st.co.kr/products/${pdt_code}`
+                                }
+                                
+                                return pdt_path
+                            }
+                        }
+                    }
+                }
+                var pdt_path = make_url (cellList,brandLists)
+                var test = document.getElementById('test');
+                var cnt = cellList.length
+                const myCellList = cellList.map(url =>
+                `<a href="${pdt_path}" target="_blank">
+                <img src="${url}" height="150" width="auto" onclick="make_url('${url.split('/')[1]}')"> ${url.split('/')[1]} 
+                </a><br>`);
+                
+
+                test.innerHTML = cnt + '<br>' + myCellList.join('');
+                for (var element of myCellList) {
+                    // console.log(element);
+                }
+            })
+            .catch(err => {
+                console.error('An error occurred:', err);
+            });
+    </script>
+</body>
+
+</html>
