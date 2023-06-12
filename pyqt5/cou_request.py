@@ -31,4 +31,4 @@ for tag in label_tags:
             tag = str(tag).split(sep='=')[1].split(sep='t')[1].split(sep='"')[0]
             tag_list.append(tag)
 print(tag_list)
-print(len(tag_list)
+print(len(tag_list))
