@@ -127,10 +127,10 @@ class WorkerThread_mall(QThread):
                 read = csv.reader(f)
                 lists = list(read)
             lists = lists[0]
+            # print(lists)
             for i in range(len(lists)):
                 if lists[i].count('스캔필요') + lists[i].count('패스') == 0:
                     start_cnt = i
-
                     break
 
             return lists, start_cnt
@@ -289,7 +289,7 @@ class WorkerThread_mall(QThread):
                     brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
-                        time.sleep(1)
+                        time.sleep(.5)
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split('=')[1].split('&')[0]
@@ -317,7 +317,10 @@ class WorkerThread_mall(QThread):
                         # log
                         self.log_update.emit(f'쿠팡 [텍스트 필수 표기정보] 확인 중..')
                         driver.find_element(By.ID, 'itemBrief').click()
-                        brief = soup.find('div', id="itemBrief").text.strip().replace (" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
+                        try:
+                            brief = soup.find('div', id="itemBrief").text.strip().replace (" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
+                        except:
+                            return ''
                         check = txt_check(file_name, brief)
                         if check == '동서가구':
                             return '동서가구'
@@ -326,7 +329,7 @@ class WorkerThread_mall(QThread):
                         # log
                         self.log_update.emit(f'쿠팡 [텍스트 배송/교환/반품 안내] 확인 중..')
                         driver.find_element(By.NAME, 'etc').click()
-                        time.sleep(1)
+                        time.sleep(.5)
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         etc = soup.find('li', class_='product-etc tab-contents__content').text.strip().replace(" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
@@ -374,7 +377,10 @@ class WorkerThread_mall(QThread):
                         
                         # 05 상세이미지
                         detail = soup.find('div', id="productDetail")
-                        imgs = detail.find_all('img')
+                        try:
+                            imgs = detail.find_all('img')
+                        except:
+                            pass
                         print(imgs)
                         imgs_cnt = 1
                         for img in imgs:
@@ -408,9 +414,12 @@ class WorkerThread_mall(QThread):
                                         time.sleep(1)
                                         pyautogui.screenshot(f'{file_name}.jpg')
                                         image_file_path = f'{file_name}.jpg'
+                                        print(image_file_path)
 
                                         for brand in brand_lists:
                                             if brand in file_name:
+                                                print('true')
+                                                time.sleep(1000)
                                                 # make bucket and get folder name for each brand
                                                 bucket = storage.bucket()
                                                 folder_name = get_week_of_month()
@@ -597,14 +606,20 @@ class WorkerThread_mall(QThread):
                                 ##
                                 hight, img_hight, check = img_check(img_url,640,150,100,300)
                                 if check == '동서가구': 
-                                    count = 0
                                     self.log_update.emit('동서가구')
-                                    while count < len(lists): #lists
+                                    count = 0  
+
+                                    while count < len(links): #lists
                                         img_element = driver.find_element(By.XPATH, f"//img[@src='{img_url}']")
                                         print('find img_element')
                                         location = img_element.location
                                         print(location)
-                                        img_element.click()
+
+                                        script = "document.querySelector('.product-detail-seemore-btn').click();"
+                                        time.sleep(.5)
+                                        driver.execute_script(script)
+                                        print(hight)
+                                        driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*0.5});")
                                         time.sleep(.5)
                                         pyautogui.screenshot(f'{file_name}.jpg')
                                         image_file_path = f'{file_name}.jpg'
@@ -626,9 +641,7 @@ class WorkerThread_mall(QThread):
                                                 delete_image(file_name)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
-                                                # break
-                                            # break
-                                        break
+                                                break
                                     break
                             
                             except:
@@ -681,7 +694,7 @@ class WorkerThread_mall(QThread):
                     def EA_cou_item_ck(url):
                             driver.get(url)
                             print(url)
-                            time.sleep(1)
+                            time.sleep(.5)
                             scroll_height_increment = 300 
                             total_scroll_height = driver.execute_script("return document.body.scrollHeight") 
 
@@ -745,16 +758,15 @@ class WorkerThread_mall(QThread):
                             if check == '동서가구':
                                 count = 0
                                 while count < len(lists) : #len(lists)
+                                    script = "document.querySelector('.product-detail-seemore-btn').click();"
+                                    driver.execute_script(script)
+                                    time.sleep(.5)
+
                                     img_element = driver.find_element(By.XPATH, f"//img[@src='{img_url}']")
+                                    img_element.click()
                                     print('find img_element')
                                     location = img_element.location
                                     print(location)
-
-                                    script = "document.querySelector('.product-detail-seemore-btn').click();"
-                                    time.sleep(3)
-                                    driver.execute_script(script)
-                                    driver.execute_script(f"window.scrollBy(0, {location['y']}")
-                                    time.sleep(2)
 
                                     pyautogui.screenshot(f'{file_name}.jpg')
                                     print(f'{file_name}.jpg')
@@ -881,7 +893,7 @@ class WorkerThread_mall(QThread):
                 self.log_update.emit(f'firebase 서버 접속')
                 if ex_ip != '183.100.232.2444':
                     lists, start_cnt = open_csv('nav') # cou_list.csv
-                    brand_lists = brand()   
+                    # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
                         time.sleep(1)
@@ -1335,7 +1347,10 @@ class WorkerThread_mall(QThread):
                         # 04 상세이미지
 
                         detail = soup.find('div', class_="production-selling-description__content")
-                        imgs = detail.find_all('img')
+                        try:
+                            imgs = detail.find_all('img')
+                        except:
+                            return ''
                         # print(imgs)
                         go_out = False
                         imgs_cnt = 1
@@ -1451,7 +1466,7 @@ class WorkerThread_mall(QThread):
                     # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
-                        time.sleep(3)
+                        time.sleep(.5)
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split("=")[1]
@@ -1512,11 +1527,12 @@ class WorkerThread_mall(QThread):
 
                         # 05. 상세이미지
                         iframes = driver.find_elements(By.TAG_NAME, "iframe")
-                        print(len(iframes))
+
                         for ifr in iframes:
                             if ifr.get_attribute('title').count('상품상세') > 0:
                                 driver.switch_to.frame(ifr)
                                 detail = bs(driver.page_source, 'html.parser')
+                                print(detail)
                                 break
                         
                         imgs = detail.find_all('img')
@@ -1536,13 +1552,13 @@ class WorkerThread_mall(QThread):
                                 if check == '동서가구':
                                     detail = bs(driver.page_source, 'html.parser')
                                     imgs = detail.find_all('img')
-
                                     for img in imgs:
                                         src = img['src']
                                         img_url2 = src
                                         img_element = driver.find_element(By.XPATH, f"//img[@src='{img_url2}']")
+                                        img_element.click()
 
-                                        driver.execute_script("arguments[0].scrollIntoView(true);", img_element)
+                                        # driver.execute_script("arguments[0].scrollIntoView(true);", img_element)
                                         time.sleep(.5)
                                         scroll_y = driver.execute_script('return window.scrollY;')
 
@@ -1635,7 +1651,7 @@ class WorkerThread_mall(QThread):
                     # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
-                        time.sleep(1)
+                        time.sleep(3)
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split('=')[1]
@@ -1672,7 +1688,9 @@ class WorkerThread_mall(QThread):
 
                             image_file_path = f'{file_name}.jpg'
                             for brand in brand_lists:
+
                                 if brand in file_name:
+
                                     # make bucket and get folder name for each brand
                                     bucket = storage.bucket()
                                     folder_name = get_week_of_month()
@@ -2035,7 +2053,7 @@ class WorkerThread_list_get(QThread):
         
         def get_list(date):
             brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket', 'auction', 'interpark','coupang']
-            # brand_lists = ['coupang']
+            brand_lists = ['coupang']
             cnt = 1
             ratio = 11
             for brand in brand_lists:
@@ -2371,7 +2389,7 @@ class WorkerThread_list_get(QThread):
                                 tag_list.append(tag)
 
                     tag_list = tag_list[1:] # 0: empty tag
-                    tag_list = set(tag_list)
+                    # tag_list = set(tag_list)
 
 
                     def process_urls(tag_list,list_start,list_end):
