@@ -1,0 +1,13 @@
+1. csv 파일을 받아서 자바스크립트로 그래프를 띄워줄 수 있는지
+	 - 브랜드 별, 날짜 별로 얼마나 매출 나왔는지 구성
+	 - 날짜 별로 얼마나 매출 나왔는지 구성
+	 - 자바스크립트로 그래프를 구현함(CanvasJS.com)
+	   <canvas class="canvasjs-chart-canvas" width="574" height="350" style="position: absolute; -webkit-tap-highlight-color: transparent; user-select: none; cursor: default;"></canvas>
+
+2. 그래프 밑에 table 띄워주기 
+	- br
+3. 팝업창 
+	https://codingbroker.tistory.com/47
+4. 팝업창 내의 그래프 
+
+그래프 : canvas.js
