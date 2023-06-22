@@ -32,7 +32,6 @@ while True:
         break
     else:
         soup = bs(res.text, 'html.parser')
-
         elem = soup.find("ul", id="idProductImg")
         elems = elem.find_all("li")
         print(len(elems))

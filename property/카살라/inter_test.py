@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup as bs
 import json
+import csv
 
 pdt_lists = []
 for pg in range(1,51):
@@ -23,25 +24,31 @@ for pg in range(1,51):
         for cnt in range(52):
             info = data['data']['listChoiceAndNormal'][cnt] # 30개까지
             for i in info:
-                pdt_lists.append(info['name'])
+                url = 'https://shopping.interpark.com/product/productInfo.do?prdNo=' + str(info['prdNo'])
+                pdt_lists.append(url)
             print('받아온 상품개수:', len(pdt_lists))
     except:
         for cnt in range(31):
             info = data['data']['listChoiceAndNormal'][cnt] # 30개까지
             for i in info:
-                pdt_lists.append(info['name'])
+                url = 'https://shopping.interpark.com/product/productInfo.do?prdNo=' + str(info['prdNo'])
+                pdt_lists.append(url)
             print('받아온 상품개수:', len(pdt_lists))
 
 pdt_lists = list(set(pdt_lists))
 
-print(len(pdt_lists))
+print(pdt_lists)
 
 
-file_path = 'test.txt'
+# file_path = 'inter_prdNo.txt'
 
-with open(file_path, 'w',encoding='utf-8') as file:
-    for item in pdt_lists:
-        file.write(item + '\n')
+# with open(file_path, 'w',encoding='utf-8') as file:
+#     for item in pdt_lists:
+#         file.write(item + '\n')
+
+with open('inter_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
+    write = csv.writer(f)
+    write.writerows([pdt_lists])
 
 
 
