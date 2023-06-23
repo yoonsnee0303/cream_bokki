@@ -333,7 +333,17 @@ class WorkerThread_mall(QThread):
                         # 02 필수 표기정보
                         # log
                         self.log_update.emit(f'쿠팡 [텍스트 필수 표기정보] 확인 중..')
-                        driver.find_element(By.ID, 'itemBrief').click()
+                        itembrief = driver.find_element(By.ID, 'itemBrief')
+                        if itembrief == None:
+                            print(type(itembrief))
+                            time.sleep(.2)
+                            driver.refresh()
+                            itembrief = driver.find_element(By.ID, 'itemBrief')
+
+
+
+                        itembrief.click()
+                        time.sleep(.5)
                         brief = soup.find('div', id="itemBrief").text.strip().replace (" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
                         check = txt_check(file_name, brief)
                         if check == '동서가구':
@@ -412,17 +422,7 @@ class WorkerThread_mall(QThread):
                                         print('find img_element')
                                         location = img_element.location
                                         print(location)
-
-                                        script = "document.querySelector('.product-detail-seemore-btn').click();"
-                                        time.sleep(1)
-                                        driver.execute_script(script)
-                                        if hight < 50:
-                                            driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*1.7});")
-                                        elif 50 < hight < 80:
-                                            driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)});")
-                                        else:
-                                            driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*0.5});")
-                                        time.sleep(1)
+                                        img_element.click()
                                         pyautogui.screenshot(f'{file_name}.jpg')
                                         image_file_path = f'{file_name}.jpg'
 
@@ -1307,7 +1307,6 @@ class WorkerThread_mall(QThread):
                         driver.get(url)
                         time.sleep(.5)
                         code = driver.page_source
-                        time.sleep(1000)
                         soup = bs(code, 'html.parser')
                         string = url.split('?')[0]
                         pro_num = re.sub(r'[^0-9]', '', string)
@@ -1485,10 +1484,41 @@ class WorkerThread_mall(QThread):
                 self.log_update.emit(f'firebase 서버 접속')
                 if ex_ip != '183.100.232.2444':
                     lists, start_cnt = open_csv('inter') # inter_list.csv
-                    # brand_lists = brand()   
+                    def check_alert(driver):
+                        try:
+                            print('ck1')
+                            alert = Alert(driver)
+                            # 경고 대화 상자의 텍스트 확인
+                            popup_text = alert.text
+                            print(popup_text)
+                            print('ck1')
+                            time.sleep(1000)
+
+                            # "품절된 상품입니다"라는 문자열이 포함되어 있는지 확인
+                            if "상품정보를 조회할 수 없습니다." in popup_text:
+                                print("품절된 상품 팝업 창이 있습니다.")
+                                return '판매종료'
+                            else:
+                                return '판매중'
+                        except:
+                            return '판매중'
                     def EA_cou_item_ck(url):
                         driver.get(url)
                         time.sleep(.5)
+                        try:
+                            alert = Alert(driver)
+                            popup_text = alert.text
+                            if '상품정보를 조회할 수 없습니다.' in popup_text:
+                                alert.accept()
+                                time.sleep(.5)
+                                return ''
+                        except:
+                            pass
+
+                        # check = check_alert
+                        # if check == '판매종료':
+                        #     print('ck2')
+                        #     return ''
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split("=")[1]

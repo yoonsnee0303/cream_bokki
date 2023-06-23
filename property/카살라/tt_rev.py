@@ -209,7 +209,14 @@ class WorkerThread_mall(QThread):
         def img_check(url, width_con, hight_con1, hight_con2, cropped_con):  # return check, hight
             def 이미지확인(url):
                 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract'
-                
+
+                if url == None:
+                    print('errorerrorerrorerrorerrorerrorerrorerrorerrorerrorerrorerror')
+                    time.sleep(2)
+                    driver.refresh()
+                    time.sleep(2)
+
+
                 urllib.request.urlretrieve(url, f"test1_{self.login_id}.jpg")
 
                 # load the new pixmap
@@ -1538,7 +1545,7 @@ class WorkerThread_mall(QThread):
                         #     print('ck2')
                         #     return ''
                         code = driver.page_source
-                        if '죄송합니다' in code:
+                        if '죄송합니다' in code: # 페이지 오류
                             driver.close()
                             time.sleep(3)
                             driver.get(url)
@@ -1725,6 +1732,7 @@ class WorkerThread_mall(QThread):
                     # log
                     self.progress_update.emit(percent)
                     delete_files()
+                    time.sleep(1)
             # auction
             # auction
             # auction

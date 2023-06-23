@@ -122,15 +122,32 @@ class WorkerThread_mall(QThread):
         driver = webdriver.Chrome(options=options)
         actions = ActionChains(driver)
 
+        def delete_files(): #onedrive 파일 삭제
+
+            files = os.listdir()
+
+            for file in files:
+                if  ('DESKTOP' in file):
+                    if ('test1' in file):
+                        os.remove(file)
+                        print(f'{files.index(file)+1}/{len(files)+1}')
+                    else:
+                        print('삭제할 test1 파일이 없음')
+                        pass
+                else:
+                    pass
+
+            print('파일 확인 done')
+
         def open_csv(file_name):  # return lists, start_cnt
-            with open(f'{file_name}_list.csv', 'r', newline='', encoding='utf-8-sig') as f:
+            with open(f'{file_name}', 'r', newline='', encoding='utf-8-sig') as f:
                 read = csv.reader(f)
                 lists = list(read)
             lists = lists[0]
+            # print(lists)
             for i in range(len(lists)):
                 if lists[i].count('스캔필요') + lists[i].count('패스') == 0:
                     start_cnt = i
-
                     break
 
             return lists, start_cnt
@@ -147,7 +164,7 @@ class WorkerThread_mall(QThread):
             week_syntax = str(today.month) + '월' + str(week_number) + '주차'
             return week_syntax
 
-        def delete_image(file_name):
+        def delete_image(file_name): # 캡처 파일 삭제
             if os.path.exists('./'+file_name+'.jpg'):
                 os.remove('./'+file_name+'.jpg')
                 print(f"{file_name}가 삭제되었습니다.")
@@ -285,7 +302,7 @@ class WorkerThread_mall(QThread):
                 #log
                 self.log_update.emit(f'firebase 서버 접속')
                 if ex_ip != '183.100.232.2444':
-                    lists, start_cnt = open_csv('cou') # cou_list.csv
+                    lists, start_cnt = open_csv('list2.csv') # cou_list.csv
                     brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
@@ -316,7 +333,16 @@ class WorkerThread_mall(QThread):
                         # 02 필수 표기정보
                         # log
                         self.log_update.emit(f'쿠팡 [텍스트 필수 표기정보] 확인 중..')
-                        driver.find_element(By.ID, 'itemBrief').click()
+                        itembrief = driver.find_element(By.ID, 'itemBrief')
+                        if itembrief == None:
+                            print(type(itembrief))
+                            time.sleep(.2)
+                            driver.refresh()
+                            itembrief = driver.find_element(By.ID, 'itemBrief')
+
+
+                        itembrief.click()
+                        time.sleep(.5)
                         brief = soup.find('div', id="itemBrief").text.strip().replace (" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
                         check = txt_check(file_name, brief)
                         if check == '동서가구':
@@ -396,16 +422,9 @@ class WorkerThread_mall(QThread):
                                         location = img_element.location
                                         print(location)
 
-                                        script = "document.querySelector('.product-detail-seemore-btn').click();"
-                                        time.sleep(1)
-                                        driver.execute_script(script)
-                                        if hight < 50:
-                                            driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*1.7});")
-                                        elif 50 < hight < 80:
-                                            driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)});")
-                                        else:
-                                            driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*0.5});")
-                                        time.sleep(1)
+                                        # script = "document.querySelector('.product-detail-seemore-btn').click();"
+                                        # driver.execute_script(script)
+                                        img_element.click()
                                         pyautogui.screenshot(f'{file_name}.jpg')
                                         image_file_path = f'{file_name}.jpg'
 
@@ -460,7 +479,7 @@ class WorkerThread_mall(QThread):
 
                     if check == '동서가구':
                         lists[li] = [lists[li], '스캔필요']
-                        with open('cou_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
+                        with open('list2.csv', 'w', newline='', encoding='utf-8-sig') as f:
                             write = csv.writer(f)
                             write.writerows([lists])
                         print('스캔필요')
@@ -472,7 +491,7 @@ class WorkerThread_mall(QThread):
                     else:
                         lists[li] = [lists[li], '패스']
                         # list_test csv파일로 저장
-                        with open('cou_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
+                        with open('list2.csv', 'w', newline='', encoding='utf-8-sig') as f:
                             write = csv.writer(f)
                             write.writerows([lists])
                         print('패스')
@@ -483,7 +502,8 @@ class WorkerThread_mall(QThread):
 
                     percent = int((li+1)/(len(lists)/100))
                     # log
-                    self.progress_update.emit(percent)                
+                    self.progress_update.emit(percent)               
+                    delete_files() 
             # llst
             # llst
             # llst
@@ -597,18 +617,20 @@ class WorkerThread_mall(QThread):
                                 ##
                                 hight, img_hight, check = img_check(img_url,640,150,100,300)
                                 if check == '동서가구': 
-                                    count = 0
                                     self.log_update.emit('동서가구')
-                                    while count < len(lists): #lists
+                                    count = 0  
+
+                                    while count < len(links): #lists
                                         img_element = driver.find_element(By.XPATH, f"//img[@src='{img_url}']")
                                         print('find img_element')
                                         location = img_element.location
                                         print(location)
-                                        img_element.click()
-                                        # script = "document.querySelector('.product-detail-seemore-btn').click();"
-                                        # driver.execute_script(script)
-                                        # driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*0.5});")
-                                        print('ck2')
+
+                                        script = "document.querySelector('.product-detail-seemore-btn').click();"
+                                        time.sleep(.5)
+                                        driver.execute_script(script)
+                                        print(hight)
+                                        driver.execute_script(f"window.scrollBy(0, {int(location['y']) - int(hight)*0.5});")
                                         time.sleep(.5)
                                         pyautogui.screenshot(f'{file_name}.jpg')
                                         image_file_path = f'{file_name}.jpg'
@@ -630,9 +652,7 @@ class WorkerThread_mall(QThread):
                                                 delete_image(file_name)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
-                                                # break
-                                            # break
-                                        break
+                                                break
                                     break
                             
                             except:
@@ -649,9 +669,9 @@ class WorkerThread_mall(QThread):
 
                     if check == '동서가구':
                         lists[li] = [lists[li], '스캔필요']
-                        # with open('11_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
-                        #     write = csv.writer(f)
-                        #     write.writerows([lists])
+                        with open('11_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
+                            write = csv.writer(f)
+                            write.writerows([lists])
                         print('스캔필요')
                         delete_image(f"test1_{getpass.getuser()}")    # 로컬 test1.jpg 이미지 삭제
 
@@ -673,6 +693,7 @@ class WorkerThread_mall(QThread):
                     percent = int((li+1)/(len(lists)/100))
                     # log
                     self.progress_update.emit(percent)
+                    delete_files()
             # lot
             # lot
             # lot
@@ -701,6 +722,9 @@ class WorkerThread_mall(QThread):
                                 if driver.execute_script("return window.pageYOffset + window.innerHeight;") >= total_scroll_height:
                                     break
                             code = driver.page_source
+                            if '아쉽게도 판매하지 않는 상품입니다.' in code:
+                                print('품절상품이 있습니다.')
+                                return ''
                             soup = bs(code, 'html.parser')
 
                             pro_num = url.split('=')[1]
@@ -878,6 +902,9 @@ class WorkerThread_mall(QThread):
                             delete_image(f"test1_{getpass.getuser()}")   # 로컬 test1 이미지 삭제
                             # log
                             self.log_update.emit(f'{li}/{len(lists)} // 패스\n')
+                        
+                        delete_files()
+                        
             # ss
             # ss
             # ss
@@ -885,7 +912,7 @@ class WorkerThread_mall(QThread):
                 self.log_update.emit(f'firebase 서버 접속')
                 if ex_ip != '183.100.232.2444':
                     lists, start_cnt = open_csv('nav') # cou_list.csv
-                    brand_lists = brand()   
+                    # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
                         time.sleep(1)
@@ -1063,7 +1090,8 @@ class WorkerThread_mall(QThread):
 
                     percent = int((li+1)/(len(lists)/100))
                     # log
-                    self.progress_update.emit(percent)                   
+                    self.progress_update.emit(percent)       
+                    delete_files()            
             # sin
             # sin
             # sin
@@ -1267,6 +1295,8 @@ class WorkerThread_mall(QThread):
                         percent = int((li+1)/(len(lists)/100))
                         # log
                         self.progress_update.emit(percent)
+                        delete_files()
+
             # oj
             # oj
             # oj
@@ -1339,7 +1369,10 @@ class WorkerThread_mall(QThread):
                         # 04 상세이미지
 
                         detail = soup.find('div', class_="production-selling-description__content")
-                        imgs = detail.find_all('img')
+                        try:
+                            imgs = detail.find_all('img')
+                        except:
+                            return ''
                         # print(imgs)
                         go_out = False
                         imgs_cnt = 1
@@ -1445,6 +1478,7 @@ class WorkerThread_mall(QThread):
                     percent = int((li+1)/(len(lists)/100))
                     # log
                     self.progress_update.emit(percent)
+                    delete_files()
             # interpark
             # interpark
             # interpark
@@ -1452,10 +1486,41 @@ class WorkerThread_mall(QThread):
                 self.log_update.emit(f'firebase 서버 접속')
                 if ex_ip != '183.100.232.2444':
                     lists, start_cnt = open_csv('inter') # inter_list.csv
-                    # brand_lists = brand()   
+                    def check_alert(driver):
+                        try:
+                            print('ck1')
+                            alert = Alert(driver)
+                            # 경고 대화 상자의 텍스트 확인
+                            popup_text = alert.text
+                            print(popup_text)
+                            print('ck1')
+                            time.sleep(1000)
+
+                            # "품절된 상품입니다"라는 문자열이 포함되어 있는지 확인
+                            if "상품정보를 조회할 수 없습니다." in popup_text:
+                                print("품절된 상품 팝업 창이 있습니다.")
+                                return '판매종료'
+                            else:
+                                return '판매중'
+                        except:
+                            return '판매중'
                     def EA_cou_item_ck(url):
                         driver.get(url)
-                        time.sleep(3)
+                        time.sleep(.5)
+                        try:
+                            alert = Alert(driver)
+                            popup_text = alert.text
+                            if '상품정보를 조회할 수 없습니다.' in popup_text:
+                                alert.accept()
+                                time.sleep(.5)
+                                return ''
+                        except:
+                            pass
+
+                        # check = check_alert
+                        # if check == '판매종료':
+                        #     print('ck2')
+                        #     return ''
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split("=")[1]
@@ -1545,8 +1610,9 @@ class WorkerThread_mall(QThread):
                                         src = img['src']
                                         img_url2 = src
                                         img_element = driver.find_element(By.XPATH, f"//img[@src='{img_url2}']")
+                                        img_element.click()
 
-                                        driver.execute_script("arguments[0].scrollIntoView(true);", img_element)
+                                        # driver.execute_script("arguments[0].scrollIntoView(true);", img_element)
                                         time.sleep(.5)
                                         scroll_y = driver.execute_script('return window.scrollY;')
 
@@ -1629,6 +1695,7 @@ class WorkerThread_mall(QThread):
                     percent = int((li+1)/(len(lists)/100))
                     # log
                     self.progress_update.emit(percent)
+                    delete_files()
             # auction
             # auction
             # auction
@@ -1639,7 +1706,7 @@ class WorkerThread_mall(QThread):
                     # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
-                        time.sleep(1)
+                        time.sleep(3)
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split('=')[1]
@@ -1676,7 +1743,9 @@ class WorkerThread_mall(QThread):
 
                             image_file_path = f'{file_name}.jpg'
                             for brand in brand_lists:
+
                                 if brand in file_name:
+
                                     # make bucket and get folder name for each brand
                                     bucket = storage.bucket()
                                     folder_name = get_week_of_month()
@@ -1790,6 +1859,7 @@ class WorkerThread_mall(QThread):
                     percent = int((li+1)/(len(lists)/100))
                     # log
                     self.progress_update.emit(percent)
+                    delete_files()
             # gmarket
             # gmarket
             # gmarket
@@ -1958,6 +2028,7 @@ class WorkerThread_mall(QThread):
                 percent = int((li+1)/(len(lists)/100))
                 # log
                 self.progress_update.emit(percent)        
+                delete_files()
         except Exception as e:
             # 예외 로그 기록
             logging.exception("예외 발생! ")
