@@ -103,6 +103,10 @@ class WorkerThread_mall(QThread):
         self.test = test
     
     def run(self):
+        import os
+        import urllib3
+        import getpass
+        path_input = getpass.getuser()
         self.login_id = getpass.getuser()
         self.log_update.emit(f'firebase 서버 접속')
 
@@ -119,6 +123,9 @@ class WorkerThread_mall(QThread):
         # options.add_argument("headless")
         options.add_argument("disable-gpu")
         options.add_argument("lang=ko_KR")
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        options.add_argument("accept-language=ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
+
         driver = webdriver.Chrome(options=options)
         actions = ActionChains(driver)
 
@@ -143,7 +150,7 @@ class WorkerThread_mall(QThread):
             with open(f'{file_name}_list.csv', 'r', newline='', encoding='utf-8-sig') as f:
                 read = csv.reader(f)
                 lists = list(read)
-            lists = lists[0]
+            lists = lists[0]# 중복제거
             # print(lists)
             for i in range(len(lists)):
                 if lists[i].count('스캔필요') + lists[i].count('패스') == 0:
@@ -164,13 +171,12 @@ class WorkerThread_mall(QThread):
             week_syntax = str(today.month) + '월' + str(week_number) + '주차'
             return week_syntax
 
-        def delete_image(file_name): # 캡처 파일 삭제
-            if os.path.exists('./'+file_name+'.jpg'):
-                os.remove('./'+file_name+'.jpg')
-                print(f"{file_name}가 삭제되었습니다.")
+        def delete_image(image_file_path): # 캡처 파일 삭제
+            if os.path.exists(image_file_path):
+                os.remove(image_file_path)
+                print(f"{image_file_path}가 삭제되었습니다.")
             else:
-                print(f"{file_name}가 존재하지 않습니다.")
-        
+                print(f"{image_file_path}가 존재하지 않습니다.")
 
         
         def txt_check(file_name, text):  # return '동서가구'
@@ -199,7 +205,7 @@ class WorkerThread_mall(QThread):
                         blob.upload_from_filename(image_file_path)
                         print(f'File {file_name} uploaded to {folder_name}')
                         self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
-                        # delete_image(file_name)
+                        delete_image(image_file_path)
                         break
 
                 return '동서가구'
@@ -441,7 +447,7 @@ class WorkerThread_mall(QThread):
                                                 # Upload a file to the folder
                                                 blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                 blob.upload_from_filename(image_file_path)
-                                                delete_image(file_name)
+                                                delete_image(image_file_path)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                                 break
@@ -458,21 +464,47 @@ class WorkerThread_mall(QThread):
                     lists[li] = lists[li].replace( "'", "").replace("[", "").replace("]", "")
                     self.log_update.emit(f'{li}/{len(lists)} 스캔시작...')
                     check = EA_cou_item_ck(lists[li])
+                    all_cookies = driver.get_cookies()
+                    print('쿠키출력')
+                    print(all_cookies)
                     driver.quit()
                     time.sleep(.5)
-                    options = webdriver.ChromeOptions()
+
+                    import os
+                    import urllib3
+                    import getpass
+                    path_input = getpass.getuser()
+
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                    from selenium import webdriver as webdriver2
+                    # from selenium.webdriver.common.by import By 
+                    # from selenium.webdriver.common.keys import Keys
+                    # from selenium.webdriver.common.action_chains import ActionChains as actionchains2
+
+                    import chromedriver_autoinstaller as auto
+                    chrome_ver = auto.get_chrome_version().split('.')[0]
+                    driver_path = f'C:/Users/{path_input}/AppData/Local/Programs/Python/Python310\{chrome_ver}/chromedriver.exe'
+                    if os.path.exists(driver_path):
+                        print(f"chrome driver is installed: {driver_path}")
+                    else:
+                        print(f"install the chrome driver(ver: {chrome_ver})")
+                    auto.install(True)
+
+
+                    #옵션 - 셀레니움
+                    options = webdriver2.ChromeOptions()
                     options.add_argument("--disable-blink_features=AutomationControlled")
-                    options.add_experimental_option("excludeSwitches", ["enable_logging"])
+                    options.add_experimental_option("excludeSwitches",["enable_logging"])
                     options.add_argument("no_sandbox")
                     options.add_argument("--start-maximized")
                     options.add_argument("disable-infobars")
                     options.add_argument("--disable-extionsions")
-                    options.add_experimental_option("useAutomationExtension", False)
-                    # options.add_argument("headless")
+                    options.add_experimental_option("useAutomationExtension",False)
+                    #options.add_argument("headless")
                     options.add_argument("disable-gpu")
                     options.add_argument("lang=ko_KR")
-                    driver = webdriver.Chrome(options=options)
-                    actions = ActionChains(driver)
+                    driver = webdriver2.Chrome(options=options)
+                    # actions = actionchains2(driver)
 
 
                     if check == '동서가구':
@@ -584,7 +616,7 @@ class WorkerThread_mall(QThread):
                                     # Upload a file to the folder
                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                     blob.upload_from_filename(image_file_path)
-                                    delete_image(file_name)
+                                    delete_image(image_file_path)
                                     print(f'File {file_name} uploaded to {folder_name}')
                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                     break
@@ -647,7 +679,7 @@ class WorkerThread_mall(QThread):
                                                 # Upload a file to the folder
                                                 blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                 blob.upload_from_filename(image_file_path)
-                                                delete_image(file_name)
+                                                delete_image(image_file_path)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                                 break
@@ -800,7 +832,7 @@ class WorkerThread_mall(QThread):
                                             blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                             blob.upload_from_filename(image_file_path)
                                             print(f'File {file_name} uploaded to {folder_name}')
-                                            delete_image(file_name)
+                                            delete_image(image_file_path)
                                             break
                                     count +=1
                                 return '동서가구'
@@ -858,7 +890,7 @@ class WorkerThread_mall(QThread):
 
                                                         blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                         blob.upload_from_filename(image_file_path)
-                                                        delete_image(file_name)
+                                                        delete_image(image_file_path)
                                                         print(f'File {file_name} uploaded to {folder_name}')
                                                         self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                                 break
@@ -997,7 +1029,7 @@ class WorkerThread_mall(QThread):
                                         blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                         blob.upload_from_filename(image_file_path)
                                         print(f'File {file_name} uploaded to {folder_name}')
-                                        delete_image(file_name)
+                                        delete_image(image_file_path)
                                         break
                             return '동서가구'
                         
@@ -1046,7 +1078,7 @@ class WorkerThread_mall(QThread):
                                                 # Upload a file to the folder
                                                 blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                 blob.upload_from_filename(image_file_path)
-                                                delete_image(file_name)
+                                                delete_image(image_file_path)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                                 break
@@ -1194,7 +1226,7 @@ class WorkerThread_mall(QThread):
                                         # Upload a file to the folder
                                         blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                         blob.upload_from_filename(image_file_path)
-                                        delete_image(file_name)
+                                        delete_image(image_file_path)
                                         print(f'File {file_name} uploaded to {folder_name}')
                                         self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                 return '동서가구'
@@ -1250,7 +1282,7 @@ class WorkerThread_mall(QThread):
                                                     # Upload a file to the folder
                                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                     blob.upload_from_filename(image_file_path)
-                                                    delete_image(file_name)
+                                                    delete_image(image_file_path)
                                                     print(f'File {file_name} uploaded to {folder_name}')
                                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                             count +=1
@@ -1360,7 +1392,7 @@ class WorkerThread_mall(QThread):
                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                     blob.upload_from_filename(image_file_path)
                                     print(f'File {file_name} uploaded to {folder_name}')
-                                    delete_image(file_name)
+                                    delete_image(image_file_path)
                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                             return '동서가구'
                         
@@ -1431,7 +1463,7 @@ class WorkerThread_mall(QThread):
                                                     # Upload a file to the folder
                                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                     blob.upload_from_filename(image_file_path)
-                                                    delete_image(file_name)
+                                                    delete_image(image_file_path)
                                                     print(f'File {file_name} uploaded to {folder_name}')
                                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                                     break
@@ -1571,7 +1603,7 @@ class WorkerThread_mall(QThread):
                                     # Upload a file to the folder
                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                     blob.upload_from_filename(image_file_path)
-                                    delete_image(file_name)
+                                    delete_image(image_file_path)
                                     print(f'File {file_name} uploaded to {folder_name}')
                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                             return '동서가구'
@@ -1648,7 +1680,7 @@ class WorkerThread_mall(QThread):
                                                     # Upload a file to the folder
                                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                     blob.upload_from_filename(image_file_path)
-                                                    delete_image(file_name)
+                                                    delete_image(image_file_path)
                                                     print(f'File {file_name} uploaded to {folder_name}')
                                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                                     break
@@ -1704,7 +1736,15 @@ class WorkerThread_mall(QThread):
                     # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
-                        time.sleep(3)
+                        time.sleep(.5)
+
+                        current_url = driver.current_url
+                        if 'redirect=1' in current_url:
+                            time.sleep(1)
+                            print(url)
+                            driver.get(url)
+                            time.sleep(1000)
+
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
                         pro_num = url.split('=')[1]
@@ -1757,7 +1797,7 @@ class WorkerThread_mall(QThread):
                                     # Upload a file to the folder
                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                     blob.upload_from_filename(image_file_path)
-                                    delete_image(file_name)
+                                    delete_image(image_file_path)
                                     print(f'File {file_name} uploaded to {folder_name}')
                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                     
@@ -1814,7 +1854,7 @@ class WorkerThread_mall(QThread):
                                                 # Upload a file to the folder
                                                 blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                 blob.upload_from_filename(image_file_path)
-                                                delete_image(file_name)
+                                                delete_image(image_file_path)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                         count +=1
@@ -1923,7 +1963,7 @@ class WorkerThread_mall(QThread):
                                     # Upload a file to the folder
                                     blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                     blob.upload_from_filename(image_file_path)
-                                    delete_image(file_name)
+                                    delete_image(image_file_path)
                                     print(f'File {file_name} uploaded to {folder_name}')
                                     self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                             return '동서가구'
@@ -1981,7 +2021,7 @@ class WorkerThread_mall(QThread):
                                                 # Upload a file to the folder
                                                 blob = bucket.blob(f'{folder_name}/{image_file_path}')
                                                 blob.upload_from_filename(image_file_path)
-                                                delete_image(file_name)
+                                                delete_image(image_file_path)
                                                 print(f'File {file_name} uploaded to {folder_name}')
                                                 self.log_update.emit(f'File {file_name} uploaded to {folder_name}')
                                         count +=1
@@ -2107,8 +2147,8 @@ class WorkerThread_list_get(QThread):
             return date,'다운로드 필요'
         
         def get_list(date):
-            brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket', 'auction', 'interpark','coupang']
-            # brand_lists = ['coupang']
+            # brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket', 'auction', 'interpark','coupang']
+            brand_lists = ['coupang']
             cnt = 1
             ratio = 11
             for brand in brand_lists:
@@ -2141,7 +2181,7 @@ class WorkerThread_list_get(QThread):
                     url = 'https://www.lotteimall.com/search/searchMain.lotte?isTemplate=Y&headerQuery=장인가구&colldisplay=3200'
                     response = requests.get(url)
                     json_data = response.json()
-                    temp = json_data['body'][15]['data'] # 15 ckp // 기존 16에서 동작되다 오류남 15로 바꾸니 정상동작 왜? 모름
+                    temp = json_data['body'][16]['data'] # 15 or 16
                     # print(len(temp))
                     lotte_lists = []
                     for i in range(len(temp)):
@@ -2233,14 +2273,13 @@ class WorkerThread_list_get(QThread):
 
                         # Scroll down by the defined amount
                         driver.execute_script(f"window.scrollBy(0, {scroll_height});")
-                        time.sleep(1)
+                        time.sleep(.5)
 
                         # get the current scroll position
                         scroll_position = driver.execute_script("return window.pageYOffset;")
 
 
                         #마지막 페이지 확인
-
                         cnt = 0
                         if 'temp_scroll_postion' in locals() and temp_scroll_postion == scroll_position:
                             # print(o_lists)
@@ -2271,14 +2310,17 @@ class WorkerThread_list_get(QThread):
 
                         ck_end = res.text.count('검색어와 일치하는 상품이 없습니다.')
                         if ck_end == 1: # 더 이상 상품이 나오지 않을 때 break
-                            #list_test csv파일로 저장
+
+                            all_list = list(set(all_list)) # 중복제거
                             with open('sin_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
                                 write = csv.writer(f)
                                 write.writerows([all_list])
                             print('수집종료')
                             self.log_update2.emit(f"{date} 상세페이지 파일 업로드")
                             break
+
                         else:
+
                             soup = bs(res.text, 'html.parser')
                             time.sleep(.5)
                             elem = soup.find("ul", id="idProductImg")
@@ -2407,14 +2449,13 @@ class WorkerThread_list_get(QThread):
                     driver = webdriver.Chrome(options=options)
                     
                     driver.get("https://store.coupang.com/vp/vendors/A00037308/products")
-                    time.sleep(1)
-                    page_height = driver.execute_script("return document.body.scrollHeight")
+                    time.sleep(.5)
 
+                    page_height = driver.execute_script("return document.body.scrollHeight")
                     scroll_height = page_height // 2.5
                     driver.execute_script("window.scrollTo(0, {});".format(scroll_height))
-
-                    see_more = driver.find_element(By.CLASS_NAME, 'scp-component-filter-options__fold-items').click()
                     ul_elements = driver.find_elements(By.CLASS_NAME,'scp-component-filter-options__option-items__btn-fold')
+
                     # log
                     self.log_update.emit('open category')
                     cnt = 0
@@ -2427,10 +2468,7 @@ class WorkerThread_list_get(QThread):
                     print(f'final {cnt}')
                     html = driver.page_source
                     soup = bs(html,'html.parser')
-                    # 파일 쓰기 모드로 열기
-                    # with open('cou_html_files.txt', 'w',encoding='utf-8') as f:
-                    #     # 파일에 쓸 내용 작성
-                    #     f.write(html)
+
 
                     label_tags = soup.find_all('label')
                     cnt = 0
@@ -2444,7 +2482,6 @@ class WorkerThread_list_get(QThread):
                                 tag_list.append(tag)
 
                     tag_list = tag_list[1:] # 0: empty tag
-                    tag_list = set(tag_list)
 
 
                     def process_urls(tag_list,list_start,list_end):
@@ -2487,7 +2524,7 @@ class WorkerThread_list_get(QThread):
                                     print(f'쿠팡 {len(detail_url)}')
                                 print(url)
                                 time.sleep(1)
-                            detail_url = set(detail_url) # 중복제거
+                            detail_url = list(set(detail_url)) # 중복제거
                             with open(file_path, "a", newline='',encoding="utf-8") as f:
                                 writer = csv.writer(f)
                                 for url in detail_url:
