@@ -2111,6 +2111,9 @@ class WorkerThread_list_get(QThread):
                 # Print the fetched rows
                 for row in rows:
                     print(row)
+            
+            # cursor.close()
+            # conn.close()
 
 
 
@@ -2159,7 +2162,6 @@ class WorkerThread_list_get(QThread):
         #####
         def get_list(date):
             # brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket','auction','interpark','coupang']
-            # brand_lists = ['lotte', 'naver', 'today', 'sin','gmarket','auction','interpark','coupang']
             brand_lists = ['coupang']
             cnt = 1
             ratio = 11
@@ -2576,7 +2578,7 @@ class WorkerThread_list_get(QThread):
                                     search2 = elem[elem.find(find_word) + len(find_word)+3:]
                                     elem = search2
                                     search2 = search2[:search2.find('"')]
-                                    #####
+                                    
 
 
                                     detail_url.append(search2)
@@ -2590,16 +2592,18 @@ class WorkerThread_list_get(QThread):
                                 print(url)
                                 time.sleep(1)
                             detail_url = list(set(detail_url)) # 중복제거
+                            print(len(detail_url))
                             # all_lists = list(set(all_lists))
                             # with open(file_path, "a", newline='',encoding="utf-8") as f:
                             #     writer = csv.writer(f)
                             #     for url in detail_url:
                             #         writer.writerow([url])
-
-                            for cou_url in detail_url:
-                                sql_statements = [f"insert into table1 (url) values ('{cou_url}');"]
-                                sql_proc(conn, sql_statements)
-                            print('coucoucoucoucoucoucou')
+                            #####
+                            # for cou_url in detail_url:
+                            #     sql_statements = [f"insert into table1 (url) values ('{cou_url}');"]
+                            #     sql_proc(conn, sql_statements)
+                            #     time.sleep(3)
+                            # print('coucoucoucoucoucoucou')
 
 
                             self.log_update2.emit(f"{date} 상세페이지 파일 업로드")

@@ -28,10 +28,10 @@ conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', passwo
 #     'Select * from table1;'
 # ]
 
-sql_statements = [
-    'select * from table1;',
-    'desc table1;'
-]
+# sql_statements = [
+    # 'select * from table1;',
+    # 'desc table1;'
+# ]
 
 
 
@@ -45,7 +45,7 @@ sql_statements = [
 # ]
 
 # sql_statements = [
-#     'drop table table1;'
+    # 'drop table table1;'
 # ]
 
 # sql_statements = [
@@ -69,15 +69,17 @@ sql_statements = [
 # ]
 
 # sql_statements = [
-#     'select * from table1;',
-#     'desc table1;'
+    # 'select * from bbang_ttol;',
+    # 'desc bbang_ttol;'
+    # 'select * from table1;',
+    # 'desc table1;'
 # ]
 
 
-# sql_statements = [
-#     "DELETE FROM table1 where url like '%%11st%%';",
-#     'select * from table1;',
-# ]
+sql_statements = [
+    # "DELETE FROM bbang_ttol where url like '%%coupang%%';",
+    'select * from bbang_ttol;',
+]
 
 
 try:
@@ -91,9 +93,18 @@ try:
         # Fetch all the rows (if app-cable)
         rows = cursor.fetchall()
 
-        # Print the fetched rows
         for row in rows:
             print(row)
+        row_count = len(rows)
+        print("행의 개수:", row_count)
+
+    # save to csv file
+    filename = '테이블명.csv'
+    import csv
+    with open(filename, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([i[0] for i in cursor.description])  # 헤더 작성
+        writer.writerows(rows)  # 행 작성
 
 finally:
     # Close the connection
