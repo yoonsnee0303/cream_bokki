@@ -92,7 +92,7 @@ else:
 
 
 
-
+conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', password='edf@@0907', charset='utf8mb4', db='edf_capture', conv={'charset':'utf8mb4', 'use_unicode': True, 'sql_mode': 'PIPES_AS_CONCAT'})
 
 class WorkerThread_mall(QThread):
     progress_update = pyqtSignal(int)
@@ -131,6 +131,70 @@ class WorkerThread_mall(QThread):
         driver = webdriver.Chrome(options=options)
         actions = ActionChains(driver)
 
+        table_name = 'bbang_ttol'
+
+        
+        def 실행(sql_statements):
+            try:
+                cursor = conn.cursor()
+                url_lists = []
+                for sql in sql_statements:
+                    cursor.execute(sql)
+
+                    # Fetch all the rows (if app-cable)
+                    rows = cursor.fetchall()
+
+                    for row in rows:
+                        # print(row)
+                        url_lists.append(row[0]) # tuple로 출력되므로 [0]을 반드시 붙여야햠.
+                    row_count = len(rows)
+                    print("행의 개수:", row_count)
+                
+
+                # 파일저장
+                # filename = 'all_list.csv'
+                # import csv
+                # with open(filename, 'w', newline='') as csvfile:
+                #     writer = csv.writer(csvfile)
+                #     writer.writerow([i[0] for i in cursor.description])  # 헤더 작성
+                #     writer.writerows(rows)  # 행 작성
+
+            finally:
+                conn.close()
+            
+            return url_lists
+            
+        def 상세페이지리스트(mall):
+            sql_statements = [f'select url from {table_name} where date is null And url Like "%%{mall}%%";']
+            lists = 실행(sql_statements)
+            print(len(lists))
+
+            end_lists_url = lists[-1].count('스캔필요') + lists[-1].count('패스')
+            if (end_lists_url== 1) :
+                print(f'{mall} 브랜드 수집이 완료되었습니다.')
+
+            # 수집이 중도에 멈췄을 경우
+            else:
+                for i in range(len(lists)):
+                    check_cnt = lists[i].count('스캔필요') + lists[i].count('패스')
+                    if check_cnt == 0:
+                        start_cnt = i
+                        break
+            return lists, start_cnt
+            
+        def 패스여부(check,url):
+            if check == '패스':
+                sql_statements = f'UPDATE {table_name} SET status = "pass" WHERE url LIKE {url};'
+            else:
+                sql_statements = f'UPDATE {table_name} SET status = "nonpass" WHERE url LIKE {url};'
+
+            실행(sql_statements)
+
+        def 시간업데이트(url):
+                sql_statements = f'UPDATE {table_name} SET start_date = current_timestamp() WHERE url LIKE {url}'
+                실행(sql_statements)
+
+
         def delete_files(): #onedrive 파일 삭제
 
             files = os.listdir()
@@ -149,16 +213,30 @@ class WorkerThread_mall(QThread):
             print('파일 확인 done')
 
         def open_csv(file_name):  # return lists, start_cnt
-            with open(f'{file_name}_list.csv', 'r', newline='', encoding='utf-8-sig') as f:
-                read = csv.reader(f)
-                lists = list(read)
-            lists = lists[0]# 중복제거
-            # print(lists)
-            for i in range(len(lists)):
-                if lists[i].count('스캔필요') + lists[i].count('패스') == 0:
-                    start_cnt = i
-                    break
 
+            # with open(f'{file_name}_list.csv', 'r', newline='', encoding='utf-8-sig') as f:
+            #     read = csv.reader(f)
+            #     lists = list(read)
+            # lists = lists[0]# 중복제거
+            # print(lists)
+
+            # 수집이 모두 완료되었을 시
+            end_lists_url = lists[-1].count('스캔필요') + lists[-1].count('패스')
+            if (end_lists_url== 1) :
+                print(f'{file_name} 브랜드 수집이 완료되었습니다.')
+
+            # 수집이 중도에 멈췄을 경우
+            else:
+                for i in range(len(lists)):
+                    check_cnt = lists[i].count('스캔필요') + lists[i].count('패스')
+                    if check_cnt == 0:
+                        start_cnt = i
+                        break
+
+            
+            
+            print(lists)
+            print(start_cnt)
             return lists, start_cnt
         
         def brand():  # return brand_lists
@@ -302,6 +380,8 @@ class WorkerThread_mall(QThread):
             hight,img_hight,check = 상단글자(image, width_unit, hight_unit, img_width, img_hight)
 
             return hight, img_hight, check
+        
+        
         try:
             # cou
             # cou
@@ -1724,18 +1804,22 @@ class WorkerThread_mall(QThread):
             elif self.test == 'auction':
                 self.log_update.emit(f'firebase 서버 접속')
                 if ex_ip != '183.100.232.2444':
-                    lists, start_cnt = open_csv('auc') # cou_list.csv
+                    #####
+                    lists,start_cnt = 상세페이지리스트('auction')
+
                     # brand_lists = brand()   
                     def EA_cou_item_ck(url):
                         driver.get(url)
                         time.sleep(.5)
-
+                        #####
+                        시간업데이트(url)
                         current_url = driver.current_url
+
+                        # error # error # error # error # errror
                         if 'redirect=1' in current_url:
                             time.sleep(1)
                             print(url)
                             driver.get(url)
-                            time.sleep(1000)
 
                         code = driver.page_source
                         soup = bs(code, 'html.parser')
@@ -1863,28 +1947,37 @@ class WorkerThread_mall(QThread):
                     lists[li] = lists[li].replace( "'", "").replace("[", "").replace("]", "")
                     self.log_update.emit(f'{li}/{len(lists)} 스캔시작...')
                     check = EA_cou_item_ck(lists[li])
+                    패스여부(check,lists[li])
+                    print('done')
+                    print('done')
+                    print('done')
+                    print('done')
+                    print('done')
 
-                    if check == '동서가구':
-                        lists[li] = [lists[li], '스캔필요']
-                        with open('auc_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
-                            write = csv.writer(f)
-                            write.writerows([lists])
-                        print('스캔필요')
-                        delete_image(f"test1_{getpass.getuser()}")    
+                    print(lists[li])
+                    time.sleep(1000)
 
-                        # log
-                        self.log_update.emit(f'{li}/{len(lists)} // 캡쳐 및 서버 전송 완료\n')
+                    # if check == '동서가구':
+                    #     lists[li] = [lists[li], '스캔필요']
+                    #     with open('auc_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
+                    #         write = csv.writer(f)
+                    #         write.writerows([lists])
+                    #     print('스캔필요')
+                    #     delete_image(f"test1_{getpass.getuser()}")    
 
-                    else:
-                        lists[li] = [lists[li], '패스']
-                        # list_test csv파일로 저장
-                        with open('auc_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
-                            write = csv.writer(f)
-                            write.writerows([lists])
-                        print('패스')
-                        delete_image(f"test1_{getpass.getuser()}")    
-                        # log
-                        self.log_update.emit(f'{li}/{len(lists)} // 패스\n')
+                    #     # log
+                    #     self.log_update.emit(f'{li}/{len(lists)} // 캡쳐 및 서버 전송 완료\n')
+
+                    # else:
+                    #     lists[li] = [lists[li], '패스']
+                    #     # list_test csv파일로 저장
+                    #     with open('auc_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
+                    #         write = csv.writer(f)
+                    #         write.writerows([lists])
+                    #     print('패스')
+                    #     delete_image(f"test1_{getpass.getuser()}")    
+                    #     # log
+                    #     self.log_update.emit(f'{li}/{len(lists)} // 패스\n')
 
                     percent = int((li+1)/(len(lists)/100))
                     # log
@@ -2084,6 +2177,7 @@ class WorkerThread_mall(QThread):
             print('error send email')
 
             smtp.quit()
+
 class WorkerThread_list_get(QThread):
     progress_update = pyqtSignal(int)
     log_update = pyqtSignal(str)
@@ -2156,8 +2250,9 @@ class WorkerThread_list_get(QThread):
             return date,'다운로드 필요'
         
         def get_list(date):
-            brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket', 'auction', 'interpark']
-            # brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket', 'auction', 'interpark','coupang']
+            brand_lists = ['11', 'lotte', 'naver', 'today', 'sin','gmarket', 'auction', 'interpark','coupang'] 
+            # brand_lists = ['interpark'] 
+
             # brand_lists = ['coupang']
             cnt = 1
             ratio = 11
@@ -2181,10 +2276,10 @@ class WorkerThread_list_get(QThread):
                             # save sql db
                             sql_statements = [f"insert into bbang_ttol (url) values ('{u}');"]
                             sql_proc(sql_statements)
-                            print(f"11번가 {len(ll_cnt)}")
+                            print(f"11번가 {ll_cnt}")
 
                             # log
-                            self.log_update2.emit(f"상세페이지 총 {len(ll_cnt)}개 수집")
+                            self.log_update2.emit(f"상세페이지 총 {ll_cnt}개 수집")
                             ll_cnt += 1
 
                     self.log_update2.emit(f"{date} csv 파일 저장 완료")
@@ -2214,7 +2309,7 @@ class WorkerThread_list_get(QThread):
 
                         # log
                         print(f'롯데온 {lotte_cnt}')
-                        self.log_update2.emit(f"상세페이지 총 {len(lotte_cnt)}개 수집")
+                        self.log_update2.emit(f"상세페이지 총 {lotte_cnt}개 수집")
                         lotte_cnt += 1
 
                     self.log_update2.emit(f"{date} csv 파일 저장 완료")
@@ -2244,7 +2339,7 @@ class WorkerThread_list_get(QThread):
 
                             # log
                             self.log_update2.emit(f"상세페이지 총 {naver_cnt}개 수집")
-                            print(f'스마트스토어 {len(naver_cnt)}')
+                            print(f'스마트스토어 {naver_cnt}')
                             print(ea_url)
 
                     # log
@@ -2324,30 +2419,23 @@ class WorkerThread_list_get(QThread):
                     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:20.0) Gecko/20100101 Firefox/20.0'}
                     page = 1
 
-
+                    sin_cnt = 1
                     while True:
                         url = f'https://www.ssg.com/search.ssg?target=all&query=%EC%9E%A5%EC%9D%B8%EA%B0%80%EA%B5%AC%2B%EB%8F%99%EC%84%9C%EA%B0%80%EA%B5%AC&brand=2000020584&count=100&page={page}'
                         res = requests.get(url, headers=headers, verify=False)
+                        print(f'신세계 {page}page')
 
                         ck_end = res.text.count('검색어와 일치하는 상품이 없습니다.')
-                        if ck_end == 1: # 더 이상 상품이 나오지 않을 때 break
-
-                            all_list = list(set(all_list)) # 중복제거
-                            with open('sin_list.csv', 'w', newline='', encoding='utf-8-sig') as f:
-                                write = csv.writer(f)
-                                write.writerows([all_list])
-                            print('수집종료')
+                        if ck_end == 1: # page가 넘어갔을 경우break
+                            print('신세계 수집종료')
                             self.log_update2.emit(f"{date} 상세페이지 파일 업로드")
                             break
-
                         else:
-
                             soup = bs(res.text, 'html.parser')
                             time.sleep(.5)
                             elem = soup.find("ul", id="idProductImg")
                             elems = elem.find_all("li")
 
-                            sin_cnt = 1
                             for el in range(len(elems)):
 
                                 # log
@@ -2368,7 +2456,7 @@ class WorkerThread_list_get(QThread):
                             
                             # log
                             print(f'신세계 {sin_cnt}')
-                            time.sleep(.5)
+                            page += 1
 
                 elif brand == 'gmarket':
                     self.log_update.emit("지마켓")
@@ -2434,6 +2522,7 @@ class WorkerThread_list_get(QThread):
 
                 elif brand == 'interpark':
                     self.log_update.emit("인터파크")
+                    interpark_cnt = 1
                     for i in range(134): 
                         try:
                             url = f'https://shopping.interpark.com/niSearch/shop/listPrdChoiceAndNormal.json?pis1=shop&page={i+1}&keyword=바스포르&rows=52'
@@ -2442,7 +2531,6 @@ class WorkerThread_list_get(QThread):
                             test = int((ratio/134)*i+ratio*7)
                             self.progress_update.emit(test)
                             cnt = len(data['data']['listChoiceAndNormal'][0])
-                            interpark_cnt = 1
                             for j in range(cnt+1):
                                 try:
                                     # 상세페이지 url
@@ -2617,6 +2705,10 @@ class WorkerThread_list_get(QThread):
         date,check = get_week()
         if check == '다운로드 필요':
             get_list(date)
+            print('모든 브랜드 상세페이지 파일 업로드')
+            # log
+            self.log_update2.emit("모든 브랜드 상세페이지 파일 업로드")
+
 
 
                 

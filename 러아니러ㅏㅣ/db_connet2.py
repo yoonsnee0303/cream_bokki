@@ -7,11 +7,12 @@ conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', passwo
 # sql_statements = [
 #     'SHOW DATABASES;',
 #     'USE edf_capture;',
-#     '''CREATE TABLE bbang_ttol (
-#         url varchar(255) not null,
-#         status varchar(10) null,
-#         date date null);''',
-#     'show tables;'
+    # '''CREATE TABLE test2 (
+    #     url varchar(255) not null,
+    #     status varchar(10) null,
+    #     date timestamp null default current_timestamp);''',
+    # 'show tables;',
+    # 'desc test2;'
 # ]
 
 # sql_statements = [
@@ -24,8 +25,13 @@ conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', passwo
 
 
 # sql_statements = [
-#     # 'show tables;'
-#     'Select * from table1;'
+    # 'show tables;'
+    # 'desc table1;'
+    # 'select * from table1;'
+# ]
+
+# sql_statements = [
+    # 'UPDATE table1 SET status = "pass" WHERE status'
 # ]
 
 # sql_statements = [
@@ -37,7 +43,7 @@ conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', passwo
 
 
 # sql_statements = [
-#     'show databases;'
+    # 'show databases;'
 # ]
 
 # sql_statements = [
@@ -52,10 +58,6 @@ conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', passwo
 #     'SELECT @@version;'
 # ]
 
-# sql_statements = [
-#     'USE edf_capture;',
-#     'insert into bbang_ba'
-# ]
 
 # sql_statements = [
 # 'drop table if exists table1;',
@@ -76,16 +78,35 @@ conn = pymysql.connect(host='121.254.162.132', port=3306, user='capture', passwo
 # ]
 
 
-sql_statements = [
-    # "DELETE FROM bbang_ttol where url like '%%coupang%%';",
-    'select * from bbang_ttol;',
-]
+# sql_statements = [
+    # 'UPDATE table1 SET status = "pass" WHERE url LIKE "%B589608562%" ', # pass or nonpass
+    # 'UPDATE table1 SET DATE3 = current_timestamp() WHERE url LIKE "%B589608562%" ', # insert date
+    # 'ALTER TABLE table1 ADD date3 timestamp null default current_timestamp;',  # date 컬럼 삽입
+    # 'ALTER TABLE table1 DROP COLUMN Date;', # 컬럼 삭제
+    # 'ALTER TABLE table1 CHANGE date3 start_date timestamp;', # 컬럼 이름 변경
+    # "alter table table1 modify Date date null ;", # 타입변경 (int(11) -> date)
+    # 'ALTER TABLE table1 ADD COLUMN end_date VARchar(20) DEFAULT CURRENT_TIMESTAMP;',
+    # 'UPDATE table1 SET end_date = current_timestamp() WHERE url LIKE "%B589608562%" ',
+    # 'SELECT TIMESTAMPDIFF(SECOND, start_date, end_date) AS duration FROM table1',
+    # 'desc table1;',
+    # 'select * from table1',
+    # 'select url from table1 where start_date is not null;' # 원래는 null이여야함
+# ]
+
+
+# sql_statements = [
+    # "DELETE FROM bbang_ttol where url like '%%interpark%%';",
+    # 'select * from bbang_ttol;',
+# ]
+
 
 
 try:
     # Create a cursor object
     cursor = conn.cursor()
-
+    
+    
+    url_lists = []
     # Execute each SQL statement separately
     for sql in sql_statements:
         cursor.execute(sql)
@@ -94,18 +115,20 @@ try:
         rows = cursor.fetchall()
 
         for row in rows:
-            print(row)
+            # print(row)
+            url_lists.append(row[0]) # tuple로 출력되므로 [0]을 반드시 붙여야햠.
         row_count = len(rows)
         print("행의 개수:", row_count)
 
     # save to csv file
-    filename = '테이블명.csv'
-    import csv
-    with open(filename, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([i[0] for i in cursor.description])  # 헤더 작성
-        writer.writerows(rows)  # 행 작성
+    # filename = 'all_list.csv'
+    # import csv
+    # with open(filename, 'w', newline='') as csvfile:
+    #     writer = csv.writer(csvfile)
+    #     writer.writerow([i[0] for i in cursor.description])  # 헤더 작성
+    #     writer.writerows(rows)  # 행 작성
 
 finally:
-    # Close the connection
+    # Close the conn
     conn.close()
+    print(url_lists)
